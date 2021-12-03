@@ -47,7 +47,8 @@ def data():
         "Humidity_Sensor",
     ]
 
-    # plt.style.use("custom.mplstyle")
+    plt.style.use("custom.mplstyle")
+
     for sensor in sensors:
         uri = f"http://127.0.0.1:8080/~/in-cse/in-name/{sensor}/node1/?rcn=4"
         headers = {"X-M2M-Origin": "admin:admin", "Content-type": "application/json"}
@@ -65,7 +66,7 @@ def data():
             x.append(time)
             y.append(value)
 
-        plt.plot(x[-5:], y[-5:], marker="o")
+        plt.plot(x[-10:], y[-10:])
         plt.savefig(f"static/{sensor}.jpg")
         plt.clf()
 
