@@ -1,29 +1,120 @@
 <!DOC html>
-    <html>
-
+<html>
     <head>
-        <script type="text/javascript" src="http://code.jquery.com/jquery-1.8.0.min.js"></script>
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css?family=Montserrat"
+        />
+        <style>
+            html {
+                background-color: #ffffff;
+                color: #232530;
+                font-family: "Montserrat", sans-serif;
+            }
+            * {
+                box-sizing: border-box;
+            }
+            .column {
+                float: left;
+                width: 33.33%;
+                padding: 5px;
+            }
+            .row::after {
+                content: "";
+                clear: both;
+                display: table;
+            }
+            .mylogo {
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+                margin-top: 25px;
+                margin-bottom: 25px;
+            }
+            .heading {
+                font-size: 20px;
+                font-weight: bold;
+                color: #232530;
+                text-align: center;
+            }
+            .dist .temp .hum {
+                margin-left: auto;
+                margin-right: auto;
+            }
+        </style>
+        <script
+            type="text/javascript"
+            src="http://code.jquery.com/jquery-1.8.0.min.js"
+        ></script>
         <script type="text/javascript">
             (function worker() {
-                $.get('/data', function (data) {
-                    // $("#myimg").attr("src", "{{url_for('static', filename='myimg.jpg')}}?timestamp=" + new Date().getTime());
-                    $('#time').html(data)    // update page with new data
-                    $('<img src="' + '/static/myimg.jpg?timestamp=' + new Date().getTime() + '">').load(function () {
-                        $(this).width(200).height(200).appendTo('#time');
-                    });
-                    setTimeout(worker, 1000); // run `worker()` again after 1000ms (1s)
+                $.get("/data", function (data) {
+                    $("#dist").replaceWith(
+                        '<img id = "dist" style="width:500;height:500;" src="' +
+                            "/static/Ultrasonic_Sensor.jpg?timestamp=" +
+                            new Date().getTime() +
+                            '">'
+                    );
+                    $("#temp").replaceWith(
+                        '<img id = "temp" style="width:500;height:500;" src="' +
+                            "/static/Temperature_Sensor.jpg?timestamp=" +
+                            new Date().getTime() +
+                            '">'
+                    );
+                    $("#hum").replaceWith(
+                        '<img id = "hum" style="width:500;height:500;" src="' +
+                            "/static/Humidity_Sensor.jpg?timestamp=" +
+                            new Date().getTime() +
+                            '">'
+                    );
+                    setTimeout(worker, 10000);
                 });
             })();
         </script>
         <meta charset="utf-8" />
-        <title>Test</title>
+        <title>SitBit</title>
     </head>
 
     <body>
-        Date & Time: <span id="time"><span>
-                <hr>
-                stuff
-                <img src="{{url_for('static', filename='myimg.jpg')}}" id="myimg">
+        <div id="logo">
+            <img
+                src="./static/sitbit_nobg.png"
+                height="100"
+                alt="logo"
+                class="mylogo"
+            />
+        </div>
+        <div id="graphs">
+            <div class="row">
+                <div class="column">
+                    <p class="heading">Distance Readings</p>
+                    <img
+                        id="dist"
+                        src="{{url_for('static', filename='Ultrasonic_Sensor.jpg')}}"
+                        alt="Distance"
+                        style="width: 100%"
+                    />
+                </div>
+                <div class="column">
+                    <p class="heading">Temperature Readings</p>
+                    <img
+                        id="temp"
+                        src="{{url_for('static', filename='Temperature_Sensor.jpg')}}"
+                        alt="Temperature"
+                        style="width: 100%"
+                    />
+                </div>
+                <div class="column">
+                    <p class="heading">Humidity Readings</p>
+                    <img
+                        id="hum"
+                        src="{{url_for('static', filename='Humidity_Sensor.jpg')}}"
+                        alt="Humidity"
+                        style="width: 100%"
+                    />
+                </div>
+            </div>
+        </div>
+        <div id="threshold"></div>
     </body>
-
-    </html>
+</html>

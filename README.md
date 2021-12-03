@@ -1,7 +1,15 @@
 Use the html files in the `templates` directory to modify the webpae. Use flask instead of JS to do stuff since CORS problems are difficult to fix and are not applicable to every browser and system.
 
 Requirements:
-- Flask
-- Jquery
-- Python
-- Matplotlib
+
+-   Flask
+-   Jquery
+-   Python
+-   Matplotlib
+
+```js
+$.get("/threshold", function (value) {
+    $("#threshold").replaceWith('<div id = "threshold">' + value + "</div>");
+    setTimeout(worker, 5000);
+});
+```
