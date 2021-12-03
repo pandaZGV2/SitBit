@@ -14,15 +14,26 @@ def index():
     return render_template("index.html")
 
 
-@app.route("/threshold")
-def threshold():
-    uri = f"http://127.0.0.1:8080/~/in-cse/in-name/Threshold_Values/node1/la"
+@app.route("/alert")
+def alert():
+    alerts = {
+        0: "Slouching for too long.",
+        1: "Sitting for too long.",
+        2: "Temperature and/or humidity too high.",
+        3: "Currently Not Seated.",
+        4: "Currently Slouching",
+        5: "You're doing great! Maintain that excellent posture!",
+    }
+
+    uri = f"http://127.0.0.1:8080/~/in-cse/in-name/Alerts/node1/la"
     headers = {"X-M2M-Origin": "admin:admin", "Content-type": "application/json"}
     response = requests.get(uri, headers=headers)
 
     data = json.loads(response.text)
-    threshold = data["m2m:cin"]["con"]
-    return threshold
+    alert_id = data["m2m:cin"]["con"]
+    alert = alerts[int(alert_id)]
+
+    return alert
 
 
 @app.route("/data")
@@ -36,7 +47,7 @@ def data():
         "Humidity_Sensor",
     ]
 
-    plt.style.use("custom.mplstyle")
+    # plt.style.use("custom.mplstyle")
     for sensor in sensors:
         uri = f"http://127.0.0.1:8080/~/in-cse/in-name/{sensor}/node1/?rcn=4"
         headers = {"X-M2M-Origin": "admin:admin", "Content-type": "application/json"}

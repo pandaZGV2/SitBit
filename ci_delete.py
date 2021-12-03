@@ -14,5 +14,5 @@ delete_ae(uri_cse + ae2)
 ae3 = "Heat_Index"
 delete_ae(uri_cse + ae3)
 
-ae4 = "Threshold_Values"
+ae4 = "Alerts"
 delete_ae(uri_cse + ae4)

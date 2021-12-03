@@ -1,14 +1,11 @@
 /**
- * @file proj.ino
+ * @file sitbit.ino
  * @author RelaxedBamboo
  * @brief
  * User enters 'C' on the serial monitor to calibrate for correct posture.
  * If the user is slouching for >30s, an alert is made
  * If the user is sitting for >60s (IRL this will be like 45-50min), an alert is made
  * If the temp and humidity are too high (as per khush's research), an alert is made
- *
- * @version 1
- * @date 2021-Nov
  *
  */
 
@@ -28,7 +25,7 @@
 #define SOUND_SPEED 0.0343
 #define OPTI_TEMP 35
 #define OPTI_HUMIDITY 70
-#define OPTI_HI 35
+#define OPTI_HI 85
 
 int threshold_distance = 15;
 String input = "";
@@ -50,7 +47,7 @@ String ae = "Ultrasonic_Sensor";
 String ae1 = "Temperature_Sensor";
 String ae2 = "Humidity_Sensor";
 String ae3 = "Heat_Index";
-String ae4 = "Threshold_Values";
+String ae4 = "Alerts";
 
 WiFiClient client;
 
@@ -71,15 +68,19 @@ void createCI(String &val, int type) {
         http.begin(Server + ae2 + "/" + cnt + "/");
     else if (type == 3)
         http.begin(Server + ae3 + "/" + cnt + "/");
-    else
+    else if (type == 4)
         http.begin(Server + ae4 + "/" + cnt + "/");
+
     http.addHeader("X-M2M-Origin", "admin:admin");
     http.addHeader("Content-Type", "application/json;ty=4");
+
     int code = http.POST("{\"m2m:cin\": {\"cnf\":\"application/json\",\"con\": " + String(val) + "}}");
-    Serial.println(code);
-    if (code == -1) {
+
+    if (code != 201)
+        Serial.println(code);
+    else if (code == -1)
         Serial.println("UNABLE TO CONNECT TO THE SERVER");
-    }
+
     http.end();
 }
 
@@ -145,7 +146,6 @@ void setup() {
     Serial.println("Calibration complete.");
     Serial.print("Calibrated Value: ");
     Serial.println(threshold_distance);
-    createCI(val_thresh, 4);
 }
 
 void loop() {
@@ -176,6 +176,8 @@ void loop() {
 
         float tempF = (temp * 9) / 5 + 32;
         HI = -42.379 + (2.04901523) * tempF + (10.14333127) * humidity + (-0.22475541) * tempF * humidity + (-6.83783 * 0.001) * pow(tempF, 2) + (-5.481717 * 0.01) * pow(humidity, 2) + (1.22874 * 0.001) * (pow(tempF, 2) * humidity) + (8.5282 * 0.0001) * (tempF * pow(humidity, 2)) + (-1.99 * 0.000001) * (pow(tempF, 2) * pow(humidity, 2));
+        Serial.print("Heat Index: ");
+        Serial.println(HI);
         String val_HI = String(HI, 5);
         createCI(val_HI, 3);
     }
@@ -190,20 +192,34 @@ void loop() {
         slouch_iter = 0;
     }
 
+    String alert = "";
+
     if (slouch_iter > 3) {
         tone(BUZZER, 1000);
-        Serial.println("Slouching for too long.");
         slouch_iter = 0;
-    }
-    if (sit_iter > 3) {
+        Serial.println("Slouching for too long.");
+        alert = "0.";
+        createCI(alert, 4);
+    } else if (sit_iter > 3) {
         tone(BUZZER, 3000);
-        Serial.println("Sitting for too long.");
         sit_iter = 0;
-    }
-    if (((temp > OPTI_TEMP || humidity > OPTI_HUMIDITY)) || (HI > OPTI_HI && !f)) {
+        Serial.println("Sitting for too long.");
+        alert = "1";
+        createCI(alert, 4);
+    } else if (HI > OPTI_HI && !f) {
         tone(BUZZER, 2000);
         Serial.println("Temperature and/or humidity too high.");
+        alert = "2";
+        createCI(alert, 4);
+    } else {
+        if (distance > 50)
+            alert = "3"; // "Currently Not Seated.";
+        else if (distance > threshold_distance)
+            alert = "4"; // "Currently Slouching.";
+        else
+            alert = "5"; // "You're doing great! Maintain that excellent posture!";
+        createCI(alert, 4);
     }
 
-    delay(5000); // 5 seconds
+    delay(10000);
 }

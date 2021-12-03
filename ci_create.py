@@ -24,7 +24,7 @@ create_ae(uri_cse, ae3)
 uri_ae3 = uri_cse + "/" + ae3
 create_cnt(uri_ae3, cnt)
 
-ae4 = "Threshold_Values"
+ae4 = "Alerts"
 create_ae(uri_cse, ae4)
 uri_ae4 = uri_cse + "/" + ae4
 create_cnt(uri_ae4, cnt)
