@@ -26,7 +26,7 @@
 
 // libraries and stuff
 #include <DHT.h>
-#include "BluetoothSerial.h"
+// #include "BluetoothSerial.h"
 #include <WiFi.h>
 #include <ThingSpeak.h>
 #include <WebServer.h>
@@ -35,9 +35,9 @@
 #include "time.h"
 #include <ArduinoJson.h>
 
-#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
-#error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
-#endif
+// #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
+// #error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
+// #endif
 
 // global variables
 int straight_thresh = 10;
@@ -46,7 +46,7 @@ int slouch_iter = 0;
 int sit_iter = 0;
 int temp = 0;
 int hum = 0;
-BluetoothSerial SerialBT;
+// BluetoothSerial SerialBT;
 
 char *ssid = "Sunflower";
 char *pwd = "mumbai2020**";
@@ -58,6 +58,7 @@ String ae = "Ultrasonic_Sensor";
 String cnt = "node1";
 String ae1 = "Temperature_Sensor";
 String ae2 = "Humidity_Sensor";
+String ae3 = "Heat_Index";
 
 WiFiClient client;
 
@@ -71,17 +72,19 @@ char writeAPIKey_hum[] = "ONVQSROYXRF7B70B";
 void createCI(String &val, int type)
 {
   HTTPClient http;
-  if(type == 0)
+  if (type == 0)
     http.begin(Server + ae + "/" + cnt + "/");
-  else if(type == 1)
+  else if (type == 1)
     http.begin(Server + ae1 + "/" + cnt + "/");
-  else
+  else if(type == 2)
     http.begin(Server + ae2 + "/" + cnt + "/");
+  else
+    http.begin(Server + ae3 + "/" + cnt + "/");
   http.addHeader("X-M2M-Origin", "admin:admin");
   http.addHeader("Content-Type", "application/json;ty=4");
   int code = http.POST("{\"m2m:cin\": {\"cnf\":\"application/json\",\"con\": " + String(val) + "}}");
   Serial.println(code);
-  if (code == -1) 
+  if (code == -1)
   {
     Serial.println("UNABLE TO CONNECT TO THE SERVER");
   }
@@ -117,7 +120,7 @@ void setup()
   pinMode(echo, INPUT);
   pinMode(BUZZER, OUTPUT);
   ledcSetup(0, 5000, 8);
-  SerialBT.begin("ESP32Ultra");
+  // SerialBT.begin("ESP32Ultra");
 
   WiFi.begin(ssid, pwd);
   while (WiFi.status() != WL_CONNECTED)
@@ -131,44 +134,45 @@ void setup()
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
 
-  ThingSpeak.begin(client);
+  // ThingSpeak.begin(client);
 
   server.begin();
   Serial.println("HTTP server started");
+
+  Serial.println("Sit perfectly straight.");
+  delay(250);
+  Serial.print("Calibrating");
+  float reading = ping();
+  for (int i = 1; i < 10; i++)
+  {
+    delay(500);
+    reading = min(ping(), reading);
+    Serial.print(".");
+  }
+  Serial.println();
+  Serial.println("Calibration complete.");
+  Serial.print("Distance(cm) upto which posture is considered 'correct' is : ");
+  Serial.println(reading);
+  straight_thresh = reading;
 }
 
 void loop()
 {
   // read the serial input
-  if (SerialBT.available())
-  {
-    input = SerialBT.readString();
-    input.trim();
-    while (SerialBT.available() > 0)
-    {
-      char t = SerialBT.read();
-    }
-  }
+  // if (SerialBT.available())
+  // {
+  //   input = SerialBT.readString();
+  //   input.trim();
+  //   while (SerialBT.available() > 0)
+  //   {
+  //     char t = SerialBT.read();
+  //   }
+  // }
 
   // if the user enters 'C' on the serial monitor, calibrate the sensor
-  if (input.equals("C") || input.equals("c"))
-  {
-    SerialBT.println("Sit perfectly straight.");
-    delay(250);
-    SerialBT.print("Calibrating");
-    float reading = ping();
-    for (int i = 1; i < 10; i++)
-    {
-      delay(500);
-      reading = min(ping(), reading);
-      SerialBT.print(".");
-    }
-    SerialBT.println();
-    SerialBT.println("Calibration complete.");
-    SerialBT.print("Distance(cm) upto which posture is considered 'correct' is : ");
-    SerialBT.println(reading);
-    straight_thresh = reading;
-  }
+  // if (input.equals("C") || input.equals("c"))
+  // {
+  // }
   input = "";
   // correct weird readings
   if (straight_thresh < 0 || straight_thresh > 100)
@@ -176,10 +180,10 @@ void loop()
 
   // fire sensors and get readings
   float distance = ping();
-  SerialBT.print("Distance in cm: ");
-  SerialBT.println(distance);
+  Serial.print("Distance in cm: ");
+  Serial.println(distance);
   String val = String(distance, 1);
-  int x = ThingSpeak.writeField(writeChannelID, 1, distance, writeAPIKey);
+  // int x = ThingSpeak.writeField(writeChannelID, 1, distance, writeAPIKey);
   Serial.println(x);
   createCI(val, 0);
   hum = dht.readHumidity();
@@ -187,25 +191,28 @@ void loop()
   bool f = false;
   if (isnan(hum) || isnan(temp) || temp < -40 || temp > 125)
   {
-    SerialBT.println("Failed to get temperature and humidity");
+    Serial.println("Failed to get temperature and humidity");
     f = true;
   }
   else
   {
-    SerialBT.print("Humidity: ");
-    SerialBT.println(hum);
-    SerialBT.print("Temperature: ");
-    SerialBT.println(temp);
+    Serial.print("Humidity: ");
+    Serial.println(hum);
+    Serial.print("Temperature: ");
+    Serial.println(temp);
     String val_humid = String(hum, 1);
     createCI(val_humid, 2);
     String val_temp = String(temp, 2);
     createCI(val_temp, 1);
-    x = ThingSpeak.writeField(writeChannelID_temp, 1, distance, writeAPIKey_temp);
-    Serial.println("humidity-status: ");
-    Serial.println(x);
-    x = ThingSpeak.writeField(writeChannelID_hum, 1, distance, writeAPIKey_hum);
-    Serial.println("temp-status: ");
-    Serial.println(x);
+    double HI = -42.379 + (-2.04901523)*temp + (-10.14333127)*hum + (-0.22475541)*temp*hum + (-6.83783 x 0.001)*pow(temp,2) + (-5.481717 * 0.01)*pow(hum, 2) + (-1.22874 * 0.001)(pow(temp,2)*hum) + (8.5282 * 0.0001)(temp*pow(hum,2)) + (-1.99 * 0.000001)*(pow(temp,2)*pow(hum,2));
+    String val_HI = String(HI, 5);
+    createCI(HI, 3);
+    // x = ThingSpeak.writeField(writeChannelID_temp, 1, distance, writeAPIKey_temp);
+    // Serial.println("humidity-status: ");
+    // Serial.println(x);
+    // x = ThingSpeak.writeField(writeChannelID_hum, 1, distance, writeAPIKey_hum);
+    // Serial.println("temp-status: ");
+    // Serial.println(x);
   }
 
   // update tracking variables
@@ -227,13 +234,13 @@ void loop()
   if (slouch_iter > 3)
   {
     tone(BUZZER, 1000);
-    SerialBT.println("Slouching for too long.");
+    Serial.println("Slouching for too long.");
     slouch_iter = 0;
   }
   if (sit_iter > 3)
   {
     tone(BUZZER, 3000);
-    SerialBT.println("Sitting for too long.");
+    Serial.println("Sitting for too long.");
     sit_iter = 0;
   }
   if ((temp > OPTI_TEMP || hum > OPTI_HUMIDITY) && !f)
